@@ -1,0 +1,29 @@
+<?xml version='1.0' encoding='ISO-8859-1'?>
+<?xml-stylesheet type='text/xsl' href='winquisitor.xsl'?>
+<winquisitor_audit>
+<scan>
+<scan_info>winquisitor.vbs -t:localhost -t:127.0.0.1 -s:Alerter -oX:sample-results.xml -d</scan_info>
+<start_date>12/29/2009</start_date>
+<start_time>9:41:33 PM</start_time>
+<target>
+<computer>localhost</computer>
+<connection>Success</connection>
+<test>
+<type>Service</type>
+<value>Alerter</value>
+<result>Installed/Stopped</result>
+</test>
+</target>
+<target>
+<computer>127.0.0.1</computer>
+<connection>Success</connection>
+<test>
+<type>Service</type>
+<value>Alerter</value>
+<result>Installed/Stopped</result>
+</test>
+</target>
+<end_date>12/29/2009</end_date>
+<end_time>9:41:35 PM</end_time>
+</scan>
+</winquisitor_audit>
