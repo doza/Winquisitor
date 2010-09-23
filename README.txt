@@ -1,4 +1,9 @@
-winquisitor.vbs v0.1.4 ( http://winquisitor.org ) 
+winquisitor.vbs v0.1.5 ( http://winquisitor.org ) 
+
+AUTHOR: Mike Cardosa
+        http://twitter.com/doza
+LAST UPDATED: September 22, 2010
+
 
 DESCRIPTION:
 =====================
@@ -62,7 +67,7 @@ PARAMETERS:
                                  winquisitor.xsl
   --web-xsl                    Reference the XSL file hosted on winquisitor.org
                                  in the XML output file instead of the
-                                 default winquisitor.xsl.
+                                 default winquisitor.xsl
                                  Note: This will not work in Firefox because
                                  FF will not parse XSL files from a different
                                  scope than the XML file.
@@ -94,8 +99,8 @@ PARAMETERS:
   -lu,--local-user:username    Test the existence of the given user
   -lg,--local-group:groupname  Enumerate the members of the given local group
   -cq,--custom-query:query     WMI query against the CIMV2 namespace
-  --result-detail              When used with -cq, detailed query results
-                                 are provided instead of a summary
+  --result-detail              Provide detailed results instead of a summary.
+                                 Any properties and values will be enumerated.
 
 
 EXAMPLES:
@@ -113,10 +118,12 @@ EXAMPLES:
  --------------------
   Test for the existence of the file "C:\Windows\system32\evil.exe" and
     the running process trojan.exe against 192.168.1.10, 192.168.1.1, and all
-    hosts listed in targets.txt. Record results in XML format to results.xml
+    hosts listed in targets.txt. Record detailed results in XML format
+    to results.xml
 
    winquisitor.vbs -t:192.168.1.10 -t:192.168.1.11 -T:targets.txt
      -f:"C:\Windows\system32\evil.exe" -p:"trojan.exe" -oX:results.xml
+     --result-detail
 
 
  EXAMPLE 3:
@@ -127,5 +134,4 @@ EXAMPLES:
 
    winquisitor.vbs -t:192.168.1.11 -np -pa:KB890046 -oC:results.csv
      -cq:"select caption from win32_useraccount" --result-detail --append-output
-
-
+     

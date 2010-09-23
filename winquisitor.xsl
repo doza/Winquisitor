@@ -59,6 +59,12 @@
   	    padding: 2px 4px 2px 4px;
   	    background: #C0C0C0;
   	  }
+  	  .scan_results hr {
+  	    border: none 0;
+        border-top: 1px dashed #000;
+        width: 99%;
+        height: 1px;
+  	  }
   	  .computer_header {
   	    padding: 2px;
   	    border: 1px solid #000;
@@ -113,7 +119,12 @@
             					<td><xsl:value-of select="value"/></td>
             					<td>
             						<xsl:for-each select="result">
-           					  	  <xsl:value-of select="."/><br/>
+            							  <xsl:call-template name="break">
+           					  	      <xsl:value-of select="."/>
+           					  	    </xsl:call-template>
+           					  	    <xsl:if test="position() != last()">
+           					  	    	<br/><hr/>
+           					  	    </xsl:if>
            					  	</xsl:for-each>
             					</td>
             				</tr>
@@ -127,4 +138,23 @@
   </html>
 
 </xsl:template>
+
+
+<xsl:template name="break">
+   <xsl:param name="text" select="."/>
+   <xsl:choose>
+   <xsl:when test="contains($text, '||')">
+      <xsl:value-of select="substring-before($text, '||')"/>
+      <br/>
+      <xsl:call-template name="break">
+          <xsl:with-param name="text" select="substring-after($text,'||')"/>
+      </xsl:call-template>
+   </xsl:when>
+   <xsl:otherwise>
+	<xsl:value-of select="$text"/>
+   </xsl:otherwise>
+   </xsl:choose>
+</xsl:template>
+
+
 </xsl:stylesheet>

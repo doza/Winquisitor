@@ -2,7 +2,7 @@
 ' Script Name:  winquisitor.vbs
 ' Author:       Mike Cardosa
 ' Website:      http://www.winquisitor.org
-' Last Updated: Dec 31, 2009 
+' Last Updated: September 22, 2010 
 '
 ' Description:  Performs tests against one or more Windows computers and outputs
 '               the results in the given format.
@@ -42,7 +42,7 @@ Option Explicit
 '*******************************************************************************
 ' Constants
 '*******************************************************************************
-Const Version      = "0.1.4"
+Const Version      = "0.1.5"
 
 
 '-------------------------------------------------------------------------------
@@ -208,6 +208,9 @@ sUsage = vbCRLF & WScript.ScriptName & " v" & Version & " ( http://winquisitor.o
                   "  --web-xsl                    Reference the XSL file hosted on winquisitor.org" & vbCRLF & _
                   "                                 in the XML output file instead of the" & vbCRLF & _
                   "                                 default winquisitor.xsl" & vbCRLF & _
+                  "                                 Note: This will not work in Firefox because" & vbCRLF & _
+                  "                                 FF will not parse XSL files from a different" & vbCRLF & _
+                  "                                 scope than the XML file." & vbCRLF & _
                   "  --append-output              Append to the given output file instead of " & vbCRLF & _
                   "                                 overwriting" & vbCRLF & _
                   vbCRLF & _
@@ -236,8 +239,8 @@ sUsage = vbCRLF & WScript.ScriptName & " v" & Version & " ( http://winquisitor.o
                   "  -lu,--local-user:username    Test the existence of the given user" & vbCRLF & _
                   "  -lg,--local-group:groupname  Enumerate the members of the given local group" & vbCRLF & _
                   "  -cq,--custom-query:query     WMI query against the CIMV2 namespace" & vbCRLF & _
-                  "  --result-detail              When used with -cq, detailed query results" & vbCRLF & _
-                  "                                 are provided intead of a summary" & vbCRLF & _
+                  "  --result-detail              Provide detailed results instead of a summary." & vbCRLF & _
+                  "                                 Any properties and values will be enumerated." & vbCRLF & _
                   vbCRLF & _
                   vbCRLF & _
                   "EXAMPLES:" & vbCRLF & _
@@ -255,10 +258,12 @@ sUsage = vbCRLF & WScript.ScriptName & " v" & Version & " ( http://winquisitor.o
                   " --------------------" & vbCRLF & _
                   "  Test for the existence of the file ""C:\Windows\system32\evil.exe"" and" & vbCRLF & _
                   "    the running process trojan.exe against 192.168.1.10, 192.168.1.1, and all" & vbCRLF & _
-                  "    hosts listed in targets.txt. Record results in XML format to results.xml" & vbCRLF & _
+                  "    hosts listed in targets.txt. Record detailed results in XML format" & vbCRLF & _
+                  "    to results.xml" & vbCRLF & _
                   vbCRLF & _
                   "   " & WScript.ScriptName & " -t:192.168.1.10 -t:192.168.1.11 -T:targets.txt" & vbCRLF & _
-                  "     -f:""C:\Windows\system32\evil.exe"" -p:""trojan.exe"" -oX:results.xml" & vbCRLF & _                 
+                  "     -f:""C:\Windows\system32\evil.exe"" -p:""trojan.exe"" -oX:results.xml" & vbCRLF & _
+                  "     --result-detail" & vbCRLF & _                 
                   vbCRLF & _
                   vbCRLF & _
                   " EXAMPLE 3:" & vbCRLF & _
@@ -989,20 +994,82 @@ Function checkProcess(sTempProcess)
   Dim iItems
   Dim oItem
   Dim sQuery
+  Dim sPropertyName
+  Dim sPropertyValue
+  Dim oProperty
+  Dim aQueryResults()
+  Dim sItemResult
+  Dim sOwnerName
+  Dim sOwnerDomain
+  Dim iReturnCode
+  Dim sOwnerSid
   
   sQuery = "Select * from win32_process Where Name='" & CStr(sTempProcess) & "'"
   Set cProcesses = oWMIService.ExecQuery(sQuery) 
   
   iItems = cProcesses.Count 
 
-  ' If the collection count is greater than zero the process is running.
 
-  If iItems = 1  Then
-    checkProcess = "1 Instance Running" 
-  ElseIf iItems > 1 Then
-    checkProcess = iItems & " Instances Running"
+  If iItems > 0  Then
+  	If bResultDetails Then
+      For Each oItem in cProcesses
+        sPropertyName = ""
+        sPropertyValue = ""
+        sItemResult = ""
+        
+        iReturnCode = oItem.GetOwner(sOwnerName,sOwnerDomain)
+
+        If iReturnCode = 0 Then
+        	sItemResult = "Owner: " & sOwnerName
+        	
+        	If IsNull(sOwnerDomain) Then
+        		sOwnerDomain = "NULL"
+          End If
+        		
+        	sItemResult = sItemResult & PROPERTY_SEPARATOR & "OwnerDomain: " & sOwnerDomain
+        End If
+
+        iReturnCode = oItem.GetOwnerSid(sOwnerSid)
+
+        If iReturnCode = 0 Then
+        	sItemResult = sItemResult & PROPERTY_SEPARATOR & "OwnerSID: " & sOwnerSid
+        End If
+
+        
+        For Each oProperty in oItem.Properties_
+          sPropertyName = oProperty.Name
+          If IsNull(oProperty.Value) Then
+          	sPropertyValue = "NULL"
+          ElseIf oProperty.IsArray Then
+          	For i = LBound(oProperty.Value) To UBound(oProperty.Value)
+          	  sPropertyValue = sPropertyValue & " | " & oProperty.Value
+          	Next
+          Else
+          	sPropertyValue = oProperty.Value
+          End If
+          'Call addArrayItem(aItemResult,sPropertyName & ": " & sPropertyValue)
+          If sItemResult <> "" Then
+            sItemResult = sItemResult & PROPERTY_SEPARATOR & sPropertyName & ": " & sPropertyValue
+          Else 
+          	sItemResult = sPropertyName & ": " & sPropertyValue
+          End If
+        Next
+        Call addArrayItem(aQueryResults,sItemResult)
+      Next
+      checkProcess = aQueryResults 
+      Exit Function
+    Else
+    	If iItems = 1 Then
+    		checkProcess = "1 Instance Running"
+    		Exit Function
+    	Else
+    		checkProcess = iItems & " Instances Running"
+    		Exit Function
+    	End If
+    End If
   Else
-  	checkProcess = "Not found"
+    checkProcess = "Not found"
+    Exit Function
   End If
 
 End Function

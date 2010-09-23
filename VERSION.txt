@@ -1,3 +1,12 @@
+VERSION 0.1.5
+=====================
+- Changed the --result-detail switch so that it applies to tests other than
+    -cq (--custom-query). This will now display detailed properties and values
+    where appropriate. Currently only implemented for -pr (--process) test.
+    Will implement for the other tests at a later date.
+- Modified winquisitor.xsl to make the output a bit more readable when
+    displaying detailed results.
+
 VERSION 0.1.4
 =====================
 - Fixed bug where the script would throw a weird error when run with wscript
